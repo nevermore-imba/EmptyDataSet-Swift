@@ -12,8 +12,8 @@ import UIKit
 
 /// The object that acts as the data source of the empty datasets.
 /// @discussion The data source must adopt the DZNEmptyDataSetSource protocol. The data source is not retained. All data source methods are optional.
-public protocol EmptyDataSetSource {
-    
+public protocol EmptyDataSetSource: NSObjectProtocol {
+
     /// Asks the data source for the title of the dataset.
     /// The dataset uses a fixed font style by default, if no attributes are set. If you want a different font style, return a attributed string.
     ///
@@ -97,7 +97,22 @@ public protocol EmptyDataSetSource {
     ///
     /// - Parameter scrollView: A scrollView subclass object informing the delegate.
     /// - Returns: The space height between elements.
-    func spaceHeight(forEmptyDataSet scrollView: UIScrollView) -> CGFloat
+    func verticalSpace(forEmptyDataSet scrollView: UIScrollView) -> CGFloat?
+
+    /// Asks the data source for a vertical top space for title. Default is 11 pts.
+    /// - Parameter scrollView: A scrollView subclass object informing the delegate.
+    /// - Returns: The vertical top space for title.
+    func verticalSpaceForTitle(forEmptyDataSet scrollView: UIScrollView) -> CGFloat?
+
+    /// Asks the data source for a vertical top space for description. Default is 11 pts.
+    /// - Parameter scrollView: A scrollView subclass object informing the delegate.
+    /// - Returns: The vertical top space for description.
+    func verticalSpaceForDescription(forEmptyDataSet scrollView: UIScrollView) -> CGFloat?
+
+    /// Asks the data source for a vertical top space for button. Default is 11 pts.
+    /// - Parameter scrollView: A scrollView subclass object informing the delegate.
+    /// - Returns: The vertical top space for button.
+    func verticalSpaceForButton(forEmptyDataSet scrollView: UIScrollView) -> CGFloat?
 
 }
 
@@ -146,8 +161,21 @@ public extension EmptyDataSetSource {
     func verticalOffset(forEmptyDataSet scrollView: UIScrollView) -> CGFloat {
         return 0
     }
- 
-    func spaceHeight(forEmptyDataSet scrollView: UIScrollView) -> CGFloat {
-        return 11
+
+    func verticalSpace(forEmptyDataSet scrollView: UIScrollView) -> CGFloat? {
+        return nil
     }
+
+    func verticalSpaceForTitle(forEmptyDataSet scrollView: UIScrollView) -> CGFloat? {
+        return nil
+    }
+
+    func verticalSpaceForDescription(forEmptyDataSet scrollView: UIScrollView) -> CGFloat? {
+        return nil
+    }
+
+    func verticalSpaceForButton(forEmptyDataSet scrollView: UIScrollView) -> CGFloat? {
+        return nil
+    }
+    
 }

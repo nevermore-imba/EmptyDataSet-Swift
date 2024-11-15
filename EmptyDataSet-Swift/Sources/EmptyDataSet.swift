@@ -23,7 +23,7 @@ private var kEmptyDataSetDelegate =         "emptyDataSetDelegate"
 private var kEmptyDataSetView =             "emptyDataSetView"
 private var kConfigureEmptyDataSetView =    "configureEmptyDataSetView"
 
-extension UIScrollView: UIGestureRecognizerDelegate {
+extension UIScrollView: @retroactive UIGestureRecognizerDelegate {
     
     private var configureEmptyDataSetView: ((EmptyDataSetView) -> Void)? {
         get {
@@ -181,14 +181,27 @@ extension UIScrollView: UIGestureRecognizerDelegate {
         return emptyDataSetSource?.customView(forEmptyDataSet: self)
     }
     
-    private var verticalOffset: CGFloat {
-        return emptyDataSetSource?.verticalOffset(forEmptyDataSet: self) ?? 0.0
+    private var verticalOffset: CGFloat? {
+        return emptyDataSetSource?.verticalOffset(forEmptyDataSet: self)
     }
     
-    private var verticalSpace: CGFloat {
-        return emptyDataSetSource?.spaceHeight(forEmptyDataSet: self) ?? 0.0
+    private var verticalSpace: CGFloat? {
+        return emptyDataSetSource?.verticalSpace(forEmptyDataSet: self)
     }
-    
+
+    private var titleVerticalTopSpace: CGFloat? {
+        return emptyDataSetSource?.verticalSpaceForTitle(forEmptyDataSet: self)
+    }
+
+    private var descVerticalTopSpace: CGFloat? {
+        return emptyDataSetSource?.verticalSpaceForDescription(forEmptyDataSet: self)
+    }
+
+    private var buttonVerticalTopSpace: CGFloat? {
+        return emptyDataSetSource?.verticalSpaceForButton(forEmptyDataSet: self)
+    }
+
+
     //MARK: - Delegate Getters & Events (Private)
     
     private var shouldFadeIn: Bool {
@@ -274,15 +287,27 @@ extension UIScrollView: UIGestureRecognizerDelegate {
                 // If a non-nil custom view is available, let's configure it instead
                 view.prepareForReuse()
                 
-                if let customView = self.customView {
+                if let customView = self.customView ?? view.customView {
                     view.customView = customView
                 } else {
                     // Get the data from the data source
                     
                     let renderingMode: UIImage.RenderingMode = imageTintColor != nil ? .alwaysTemplate : .alwaysOriginal
-                    
-                    view.verticalSpace = verticalSpace
-                    
+
+                    if let verticalSpace = verticalSpace {
+                        view.verticalSpace = verticalSpace
+                    } else {
+                        if let titleVerticalTopSpace = titleVerticalTopSpace {
+                            view.titleVerticalTopSpace = titleVerticalTopSpace
+                        }
+                        if let descVerticalTopSpace = descVerticalTopSpace {
+                            view.detailVerticalTopSpace = descVerticalTopSpace
+                        }
+                        if let buttonVerticalTopSpace = buttonVerticalTopSpace {
+                            view.buttonVerticalTopSpace = buttonVerticalTopSpace
+                        }
+                    }
+
                     // Configure Image
                     if let image = image {
                         view.imageView.image = image.withRenderingMode(renderingMode)
@@ -313,9 +338,11 @@ extension UIScrollView: UIGestureRecognizerDelegate {
                     }
                 }
                 
-                // Configure offset
-                view.verticalOffset = verticalOffset
-                
+                // Configure offset if needed
+                if let verticalOffset = verticalOffset {
+                    view.verticalOffset = verticalOffset
+                }
+
                 // Configure the empty dataset view
                 view.backgroundColor = dataSetBackgroundColor
                 view.isHidden = false

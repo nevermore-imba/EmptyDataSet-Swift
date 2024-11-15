@@ -10,7 +10,7 @@ import Foundation
 import UIKit
 
 public class EmptyDataSetView: UIView {
-    
+
     internal lazy var contentView: UIView = {
         let contentView = UIView()
         contentView.translatesAutoresizingMaskIntoConstraints = false
@@ -19,7 +19,7 @@ public class EmptyDataSetView: UIView {
         contentView.alpha = 0
         return contentView
     }()
-    
+
     internal lazy var imageView: UIImageView = {
         let imageView = UIImageView()
         imageView.translatesAutoresizingMaskIntoConstraints = false
@@ -30,12 +30,12 @@ public class EmptyDataSetView: UIView {
         self.contentView.addSubview(imageView)
         return imageView
     }()
-    
+
     internal lazy var titleLabel: UILabel = {
         let titleLabel = UILabel()
         titleLabel.translatesAutoresizingMaskIntoConstraints = false
         titleLabel.backgroundColor = UIColor.clear
-        
+
         titleLabel.font = UIFont.systemFont(ofSize: 27.0)
         titleLabel.textColor = UIColor(white: 0.6, alpha: 1.0)
         titleLabel.textAlignment = .center
@@ -45,12 +45,12 @@ public class EmptyDataSetView: UIView {
         self.contentView.addSubview(titleLabel)
         return titleLabel
     }()
-    
+
     internal lazy var detailLabel: UILabel = {
         let detailLabel = UILabel()
         detailLabel.translatesAutoresizingMaskIntoConstraints = false
         detailLabel.backgroundColor = UIColor.clear
-        
+
         detailLabel.font = UIFont.systemFont(ofSize: 17.0)
         detailLabel.textColor = UIColor(white: 0.6, alpha: 1.0)
         detailLabel.textAlignment = .center
@@ -60,7 +60,7 @@ public class EmptyDataSetView: UIView {
         self.contentView.addSubview(detailLabel)
         return detailLabel
     }()
-    
+
     internal lazy var button: UIButton = {
         let button = UIButton.init(type: .custom)
         button.translatesAutoresizingMaskIntoConstraints = false
@@ -68,40 +68,46 @@ public class EmptyDataSetView: UIView {
         button.contentHorizontalAlignment = .center
         button.contentVerticalAlignment = .center
         button.accessibilityIdentifier = "empty set button"
-        
+
         self.contentView.addSubview(button)
         return button
     }()
-    
+
     private var canShowImage: Bool {
-        return imageView.image != nil
+        if let image = imageView.image, image.size.width > 0, image.size.height > 0 {
+            return true
+        }
+        return false
     }
-    
+
     private var canShowTitle: Bool {
         if let attributedText = titleLabel.attributedText {
             return attributedText.length > 0
         }
         return false
     }
-    
+
     private var canShowDetail: Bool {
         if let attributedText = detailLabel.attributedText {
             return attributedText.length > 0
         }
         return false
     }
-    
+
     private var canShowButton: Bool {
-        if let attributedTitle = button.attributedTitle(for: .normal) {
-            return attributedTitle.length > 0
-        } else if let _ = button.image(for: .normal) {
+        if let attributedTitle = button.currentAttributedTitle, attributedTitle.length > 0 {
+            return true
+        } else if let title = button.currentTitle, !title.isEmpty {
+            return true
+        } else if let image = button.currentImage, image.size.width > 0, image.size.height > 0 {
+            return true
+        } else if let image = button.currentBackgroundImage, image.size.width > 0, image.size.height > 0 {
             return true
         }
-        
         return false
     }
-    
-    
+
+
     internal var customView: UIView? {
         willSet {
             if let customView = customView {
@@ -115,11 +121,14 @@ public class EmptyDataSetView: UIView {
             }
         }
     }
-    
+
     internal var fadeInOnDisplay = false
     internal var verticalOffset: CGFloat = 0
-    internal var verticalSpace: CGFloat = 11
-    
+    internal var verticalSpace: CGFloat?
+    internal var titleVerticalTopSpace: CGFloat?
+    internal var detailVerticalTopSpace: CGFloat?
+    internal var buttonVerticalTopSpace: CGFloat?
+
     internal var didTapContentViewHandle: (() -> Void)?
     internal var didTapDataButtonHandle: (() -> Void)?
     internal var willAppearHandle: (() -> Void)?
@@ -127,15 +136,18 @@ public class EmptyDataSetView: UIView {
     internal var willDisappearHandle: (() -> Void)?
     internal var didDisappearHandle: (() -> Void)?
 
+    fileprivate var _layoutConstraints = [NSLayoutConstraint]()
+
     override init(frame: CGRect) {
         super.init(frame: frame)
         addSubview(contentView)
     }
-    
+
     required public init?(coder aDecoder: NSCoder) {
-        fatalError("init(coder:) has not been implemented")
+        super.init(coder: aDecoder)
+        addSubview(contentView)
     }
-    
+
     override public func didMoveToSuperview() {
         if let superviewBounds = superview?.bounds {
             frame = CGRect(x: 0, y: 0, width: superviewBounds.width, height: superviewBounds.height)
@@ -148,15 +160,15 @@ public class EmptyDataSetView: UIView {
             contentView.alpha = 1
         }
     }
-    
+
     // MARK: - Action Methods
-    
+
     internal func removeAllConstraints() {
-        removeConstraints(constraints)
-        contentView.removeConstraints(contentView.constraints)
+        NSLayoutConstraint.deactivate(_layoutConstraints)
     }
-    
+
     internal func prepareForReuse() {
+
         titleLabel.text = nil
         detailLabel.text = nil
         imageView.image = nil
@@ -167,30 +179,56 @@ public class EmptyDataSetView: UIView {
         button.setBackgroundImage(nil, for: .normal)
         button.setBackgroundImage(nil, for: .highlighted)
         customView = nil
-        
+
         removeAllConstraints()
     }
-    
-    
+
+
     // MARK: - Auto-Layout Configuration
     internal func setupConstraints() {
-        
+
+        defer {
+            if !_layoutConstraints.isEmpty {
+                NSLayoutConstraint.activate(_layoutConstraints)
+            }
+        }
+
+        guard _layoutConstraints.isEmpty else {
+            return
+        }
+
+        let contentCenterYConstraint = contentView.centerYAnchor.constraint(equalTo: self.centerYAnchor)
+
         // First, configure the content view constaints
         // The content view must alway be centered to its superview
-        let centerXConstraint = NSLayoutConstraint(item: contentView, attribute: .centerX, relatedBy: .equal, toItem: self, attribute: .centerX, multiplier: 1.0, constant: 0.0)
-        let centerYConstraint = NSLayoutConstraint(item: contentView, attribute: .centerY, relatedBy: .equal, toItem: self, attribute: .centerY, multiplier: 1.0, constant: 0.0)
-        
-        self.addConstraints([centerXConstraint, centerYConstraint])
-        self.addConstraints(NSLayoutConstraint.constraints(withVisualFormat: "H:|[contentView]|", options: [], metrics: nil, views: ["contentView": contentView]))
+        _layoutConstraints = [
+            contentView.centerXAnchor.constraint(equalTo: self.centerXAnchor),
+            contentCenterYConstraint
+        ]
+
+        _layoutConstraints += NSLayoutConstraint.constraints(
+            withVisualFormat: "H:|[contentView]|",
+            options: [],
+            metrics: nil,
+            views: ["contentView": contentView]
+        )
 
         // When a custom offset is available, we adjust the vertical constraints' constants
-        if (verticalOffset != 0 && constraints.count > 0) {
-            centerYConstraint.constant = verticalOffset
+        if verticalOffset != 0 && constraints.count > 0 {
+            contentCenterYConstraint.constant = verticalOffset
         }
-        
+
+        if customView != nil {
+            imageView.removeFromSuperview()
+            titleLabel.removeFromSuperview()
+            detailLabel.removeFromSuperview()
+            button.removeFromSuperview()
+        }
+
         if let customView = customView {
-            let centerXConstraint = NSLayoutConstraint(item: customView, attribute: .centerX, relatedBy: .equal, toItem: self, attribute: .centerX, multiplier: 1.0, constant: 0.0)
-            let centerYConstraint = NSLayoutConstraint(item: customView, attribute: .centerY, relatedBy: .equal, toItem: self, attribute: .centerY, multiplier: 1.0, constant: 0.0)
+
+            let centerXConstraint = customView.centerXAnchor.constraint(equalTo: self.centerXAnchor)
+            let centerYConstraint = customView.centerYAnchor.constraint(equalTo: self.centerYAnchor)
 
             var customViewSize = customView.frame.size
 
@@ -198,128 +236,161 @@ public class EmptyDataSetView: UIView {
                 customViewSize = customView.intrinsicContentSize
             }
 
-            if customViewSize.width <= 0 || customViewSize.height <= 0 {
-                customViewSize = customView.systemLayoutSizeFitting(UIView.layoutFittingCompressedSize)
-            }
-
             let customViewHeight = customViewSize.height
             let customViewWidth = customViewSize.width
+
             let heightConstarint: NSLayoutConstraint
             let widthConstarint: NSLayoutConstraint
 
-            if(customViewHeight == 0) {
-                heightConstarint = NSLayoutConstraint(item: customView, attribute: .height, relatedBy: .lessThanOrEqual, toItem: self, attribute: .height, multiplier: 1, constant: 0.0)
+            if customViewHeight <= 0 {
+                heightConstarint = customView.heightAnchor.constraint(lessThanOrEqualTo: self.heightAnchor)
             } else {
-                heightConstarint = NSLayoutConstraint(item: customView, attribute: .height, relatedBy: .equal, toItem: nil, attribute: .notAnAttribute, multiplier: 1, constant: customViewHeight)
+                heightConstarint = customView.heightAnchor.constraint(equalToConstant: customViewHeight)
             }
-            if(customViewWidth == 0) {
-                widthConstarint = NSLayoutConstraint(item: customView, attribute: .width, relatedBy: .lessThanOrEqual, toItem: self, attribute: .width, multiplier: 1, constant: 0.0)
+
+            if customViewWidth <= 0 {
+                widthConstarint = customView.widthAnchor.constraint(lessThanOrEqualTo: self.widthAnchor)
             } else {
-                widthConstarint = NSLayoutConstraint(item: customView, attribute: .width, relatedBy: .equal, toItem: nil, attribute: .notAnAttribute, multiplier: 1, constant: customViewWidth)
+                widthConstarint = customView.widthAnchor.constraint(equalToConstant: customViewWidth)
             }
-            
+
             // When a custom offset is available, we adjust the vertical constraints' constants
             if (verticalOffset != 0) {
                 centerYConstraint.constant = verticalOffset
             }
-            self.addConstraints([centerXConstraint, centerYConstraint])
-            self.addConstraints([heightConstarint, widthConstarint])
-//            contentView.addConstraints(NSLayoutConstraint.constraints(withVisualFormat: "H:|[customView]|", options: [], metrics: nil, views: ["customView": customView]))
-//            contentView.addConstraints(NSLayoutConstraint.constraints(withVisualFormat: "V:|[customView]|", options: [], metrics: nil, views: ["customView": customView]))
-        } else {
-            
-            let width = frame.width > 0 ? frame.width : UIScreen.main.bounds.width
-            let padding = roundf(Float(width/16.0))
-            let verticalSpace = self.verticalSpace  // Default is 11 pts
-            
-            var subviewStrings: [String] = []
-            var views: [String: UIView] = [:]
-            let metrics = ["padding": padding]
-            
-            // Assign the image view's horizontal constraints
-            if canShowImage {
-                imageView.isHidden = false
-                
-                subviewStrings.append("imageView")
-                views[subviewStrings.last!] = imageView
-                
-                contentView.addConstraint(NSLayoutConstraint.init(item: imageView, attribute: .centerX, relatedBy: .equal, toItem: contentView, attribute: .centerX, multiplier: 1.0, constant: 0.0))
-            } else {
-                imageView.isHidden = true
-            }
-            
-            // Assign the title label's horizontal constraints
-            if (canShowTitle) {
-                titleLabel.isHidden = false
-                subviewStrings.append("titleLabel")
-                views[subviewStrings.last!] = titleLabel
-                
-                contentView.addConstraints(NSLayoutConstraint.constraints(withVisualFormat: "H:|-(padding)-[titleLabel(>=0)]-(padding)-|", options: [], metrics: metrics, views: views))
-            } else {
-                titleLabel.isHidden = true
-            }
-            
-            // Assign the detail label's horizontal constraints
-            if (canShowDetail) {
-                detailLabel.isHidden = false
-                subviewStrings.append("detailLabel")
-                views[subviewStrings.last!] = detailLabel
 
-                contentView.addConstraints(NSLayoutConstraint.constraints(withVisualFormat: "H:|-(padding)-[detailLabel(>=0)]-(padding)-|", options: [], metrics: metrics, views: views))
-            } else {
-                detailLabel.isHidden = true
-            }
-            
-            // Assign the button's horizontal constraints
-            if (canShowButton) {
-                button.isHidden = false
-                subviewStrings.append("button")
-                views[subviewStrings.last!] = button
+            _layoutConstraints += [centerXConstraint, centerYConstraint]
+            _layoutConstraints += [heightConstarint, widthConstarint]
 
-                var buttonSize = button.frame.size
-
-                if buttonSize.width <= 0 || buttonSize.height <= 0 {
-                    buttonSize = button.intrinsicContentSize
-                }
-
-                if buttonSize.width <= 0 || buttonSize.height <= 0 {
-                    buttonSize = button.systemLayoutSizeFitting(UIView.layoutFittingCompressedSize)
-                }
-
-                if buttonSize.width > 0 && buttonSize.height > 0 {
-                    NSLayoutConstraint.activate([
-                        button.widthAnchor.constraint(equalToConstant: buttonSize.width),
-                        button.heightAnchor.constraint(equalToConstant: buttonSize.height),
-                        button.centerXAnchor.constraint(equalTo: contentView.centerXAnchor),
-                    ])
-                } else {
-                    contentView.addConstraints(NSLayoutConstraint.constraints(withVisualFormat: "H:|-(padding)-[button(>=0)]-(padding)-|", options: [], metrics: metrics, views: views))
-                }
-
-            } else {
-                button.isHidden = true
-            }
-            
-            var verticalFormat = String()
-            
-            // Build a dynamic string format for the vertical constraints, adding a margin between each element. Default is 11 pts.
-            for i in 0 ..< subviewStrings.count {
-                let string = subviewStrings[i]
-                verticalFormat += "[\(string)]"
-                
-                if i < subviewStrings.count - 1 {
-                    verticalFormat += "-(\(verticalSpace))-"
-                }
-            }
-            
-            // Assign the vertical constraints to the content view
-            if !verticalFormat.isEmpty {
-                contentView.addConstraints(NSLayoutConstraint.constraints(withVisualFormat: "V:|\(verticalFormat)|", options: [], metrics: metrics, views: views))
-            }
-
+            return
         }
-        
+
+        // layout build-in subviews
+
+        let width = frame.width > 0 ? frame.size.width : UIScreen.main.bounds.width
+        let padding = CGFloat(roundf(Float(width/16.0)))
+        let verticalSpace = verticalSpace ?? 11.0
+        let titleVerticalTopSpace = titleVerticalTopSpace ?? verticalSpace
+        let detailVerticalTopSpace = detailVerticalTopSpace ?? verticalSpace
+        let buttonVerticalTopSpace = buttonVerticalTopSpace ?? verticalSpace
+
+        var prevView: UIView? = nil
+
+        if canShowImage {
+
+            imageView.isHidden = false
+
+            _layoutConstraints += [
+                imageView.topAnchor.constraint(equalTo: contentView.topAnchor),
+                imageView.centerXAnchor.constraint(equalTo: contentView.centerXAnchor)
+            ]
+
+            prevView = imageView
+
+        } else {
+            imageView.isHidden = true
+        }
+
+        // Assign the title label's horizontal constraints
+        if canShowTitle {
+
+            titleLabel.isHidden = false
+
+            _layoutConstraints += [
+                titleLabel.widthAnchor.constraint(equalTo: contentView.widthAnchor, multiplier: 1, constant: -2.0 * padding),
+                titleLabel.centerXAnchor.constraint(equalTo: contentView.centerXAnchor)
+            ]
+
+            if let prevView {
+                _layoutConstraints += [
+                    titleLabel.topAnchor.constraint(equalTo: prevView.bottomAnchor, constant: titleVerticalTopSpace)
+                ]
+            }
+
+            prevView = titleLabel
+
+        } else {
+            titleLabel.isHidden = true
+        }
+
+        // Assign the detail label's horizontal constraints
+        if (canShowDetail) {
+
+            detailLabel.isHidden = false
+
+            _layoutConstraints += [
+                detailLabel.widthAnchor.constraint(equalTo: contentView.widthAnchor, multiplier: 1, constant: -2.0 * padding),
+                detailLabel.centerXAnchor.constraint(equalTo: contentView.centerXAnchor)
+            ]
+
+            if let prevView {
+                _layoutConstraints += [
+                    detailLabel.topAnchor.constraint(equalTo: prevView.bottomAnchor, constant: detailVerticalTopSpace)
+                ]
+            }
+
+            prevView = detailLabel
+
+        } else {
+            detailLabel.isHidden = true
+        }
+
+        // Assign the button's horizontal constraints
+        if canShowButton {
+
+            button.isHidden = false
+
+            var buttonSize = button.frame.size
+
+            if buttonSize.width <= 0 || buttonSize.height <= 0 {
+                buttonSize = button.intrinsicContentSize
+            }
+
+            let buttonMaxWidthConstraint = button.widthAnchor.constraint(
+                equalTo: contentView.widthAnchor,
+                multiplier: 1,
+                constant: -2.0 * padding
+            )
+
+            if buttonSize.width > 0 && buttonSize.height > 0 {
+
+                buttonMaxWidthConstraint.priority = .required - 1
+
+                _layoutConstraints += [
+                    button.widthAnchor.constraint(equalToConstant: buttonSize.width),
+                    buttonMaxWidthConstraint,
+                    button.heightAnchor.constraint(equalToConstant: buttonSize.height),
+                ]
+
+            } else {
+                _layoutConstraints += [
+                    buttonMaxWidthConstraint,
+                    button.heightAnchor.constraint(equalToConstant: 40),
+                ]
+            }
+
+            _layoutConstraints += [
+                button.centerXAnchor.constraint(equalTo: contentView.centerXAnchor),
+            ]
+
+            if let prevView {
+                _layoutConstraints += [
+                    button.topAnchor.constraint(equalTo: prevView.bottomAnchor, constant: buttonVerticalTopSpace)
+                ]
+            }
+
+            prevView = button
+            
+        } else {
+            button.isHidden = true
+        }
+
+        if let prevView {
+            _layoutConstraints += [
+                prevView.bottomAnchor.constraint(equalTo: contentView.bottomAnchor)
+            ]
+        }
     }
-    
+
 }
 

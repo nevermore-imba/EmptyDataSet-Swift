@@ -105,7 +105,28 @@ extension EmptyDataSetView {
         verticalSpace = space
         return self
     }
-    
+
+    /// Asks the data source for a vertical top space for title. Default is 11 pts.
+    @discardableResult
+    public func verticalSpaceForTitle(_ space: CGFloat) -> Self {
+        titleVerticalTopSpace = space
+        return self
+    }
+
+    /// Asks the data source for a vertical top space for description. Default is 11 pts.
+    @discardableResult
+    public func verticalSpaceForDescription(_ space: CGFloat) -> Self {
+        detailVerticalTopSpace = space
+        return self
+    }
+
+    /// Asks the data source for a vertical top space for button. Default is 11 pts.
+    @discardableResult
+    public func verticalSpaceForButton(_ space: CGFloat) -> Self {
+        buttonVerticalTopSpace = space
+        return self
+    }
+
     //MARK: - Delegate & Events
     /// Asks the delegate to know if the empty dataset should fade in when displayed. Default is true.
     @discardableResult
