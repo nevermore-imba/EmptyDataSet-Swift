@@ -191,12 +191,22 @@ public class EmptyDataSetView: UIView {
         if let customView = customView {
             let centerXConstraint = NSLayoutConstraint(item: customView, attribute: .centerX, relatedBy: .equal, toItem: self, attribute: .centerX, multiplier: 1.0, constant: 0.0)
             let centerYConstraint = NSLayoutConstraint(item: customView, attribute: .centerY, relatedBy: .equal, toItem: self, attribute: .centerY, multiplier: 1.0, constant: 0.0)
-            
-            let customViewHeight = customView.frame.height
-            let customViewWidth = customView.frame.width
-            var heightConstarint: NSLayoutConstraint!
-            var widthConstarint: NSLayoutConstraint!
-            
+
+            var customViewSize = customView.frame.size
+
+            if customViewSize.width <= 0 || customViewSize.height <= 0 {
+                customViewSize = customView.intrinsicContentSize
+            }
+
+            if customViewSize.width <= 0 || customViewSize.height <= 0 {
+                customViewSize = customView.systemLayoutSizeFitting(UIView.layoutFittingCompressedSize)
+            }
+
+            let customViewHeight = customViewSize.height
+            let customViewWidth = customViewSize.width
+            let heightConstarint: NSLayoutConstraint
+            let widthConstarint: NSLayoutConstraint
+
             if(customViewHeight == 0) {
                 heightConstarint = NSLayoutConstraint(item: customView, attribute: .height, relatedBy: .lessThanOrEqual, toItem: self, attribute: .height, multiplier: 1, constant: 0.0)
             } else {
@@ -265,8 +275,27 @@ public class EmptyDataSetView: UIView {
                 button.isHidden = false
                 subviewStrings.append("button")
                 views[subviewStrings.last!] = button
-                
-                contentView.addConstraints(NSLayoutConstraint.constraints(withVisualFormat: "H:|-(padding)-[button(>=0)]-(padding)-|", options: [], metrics: metrics, views: views))
+
+                var buttonSize = button.frame.size
+
+                if buttonSize.width <= 0 || buttonSize.height <= 0 {
+                    buttonSize = button.intrinsicContentSize
+                }
+
+                if buttonSize.width <= 0 || buttonSize.height <= 0 {
+                    buttonSize = button.systemLayoutSizeFitting(UIView.layoutFittingCompressedSize)
+                }
+
+                if buttonSize.width > 0 && buttonSize.height > 0 {
+                    NSLayoutConstraint.activate([
+                        button.widthAnchor.constraint(equalToConstant: buttonSize.width),
+                        button.heightAnchor.constraint(equalToConstant: buttonSize.height),
+                        button.centerXAnchor.constraint(equalTo: contentView.centerXAnchor),
+                    ])
+                } else {
+                    contentView.addConstraints(NSLayoutConstraint.constraints(withVisualFormat: "H:|-(padding)-[button(>=0)]-(padding)-|", options: [], metrics: metrics, views: views))
+                }
+
             } else {
                 button.isHidden = true
             }
