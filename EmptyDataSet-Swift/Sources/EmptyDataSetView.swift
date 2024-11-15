@@ -203,15 +203,9 @@ public class EmptyDataSetView: UIView {
         // The content view must alway be centered to its superview
         _layoutConstraints = [
             contentView.centerXAnchor.constraint(equalTo: self.centerXAnchor),
+            contentView.widthAnchor.constraint(equalTo: self.widthAnchor),
             contentCenterYConstraint
         ]
-
-        _layoutConstraints += NSLayoutConstraint.constraints(
-            withVisualFormat: "H:|[contentView]|",
-            options: [],
-            metrics: nil,
-            views: ["contentView": contentView]
-        )
 
         // When a custom offset is available, we adjust the vertical constraints' constants
         if verticalOffset != 0 && constraints.count > 0 {
@@ -267,7 +261,7 @@ public class EmptyDataSetView: UIView {
 
         // layout build-in subviews
 
-        let width = frame.width > 0 ? frame.size.width : UIScreen.main.bounds.width
+        let width = frame.size.width > 0 ? frame.size.width : UIScreen.main.bounds.width
         let padding = CGFloat(roundf(Float(width/16.0)))
         let verticalSpace = verticalSpace ?? 11.0
         let titleVerticalTopSpace = titleVerticalTopSpace ?? verticalSpace
@@ -305,6 +299,10 @@ public class EmptyDataSetView: UIView {
                 _layoutConstraints += [
                     titleLabel.topAnchor.constraint(equalTo: prevView.bottomAnchor, constant: titleVerticalTopSpace)
                 ]
+            } else {
+                _layoutConstraints += [
+                    titleLabel.topAnchor.constraint(equalTo: contentView.topAnchor)
+                ]
             }
 
             prevView = titleLabel
@@ -326,6 +324,10 @@ public class EmptyDataSetView: UIView {
             if let prevView {
                 _layoutConstraints += [
                     detailLabel.topAnchor.constraint(equalTo: prevView.bottomAnchor, constant: detailVerticalTopSpace)
+                ]
+            } else {
+                _layoutConstraints += [
+                    detailLabel.topAnchor.constraint(equalTo: contentView.topAnchor)
                 ]
             }
 
@@ -376,6 +378,10 @@ public class EmptyDataSetView: UIView {
             if let prevView {
                 _layoutConstraints += [
                     button.topAnchor.constraint(equalTo: prevView.bottomAnchor, constant: buttonVerticalTopSpace)
+                ]
+            } else {
+                _layoutConstraints += [
+                    button.topAnchor.constraint(equalTo: contentView.topAnchor)
                 ]
             }
 
