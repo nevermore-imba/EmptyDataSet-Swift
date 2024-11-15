@@ -174,6 +174,7 @@ public class EmptyDataSetView: UIView {
 
     internal func removeAllConstraints() {
         NSLayoutConstraint.deactivate(_layoutConstraints)
+        _layoutConstraints = []
     }
 
     internal func prepareForReuse() {
@@ -202,8 +203,8 @@ public class EmptyDataSetView: UIView {
             }
         }
 
-        guard _layoutConstraints.isEmpty else {
-            return
+        if !_layoutConstraints.isEmpty {
+            removeAllConstraints()
         }
 
         let contentCenterYConstraint = contentView.centerYAnchor.constraint(equalTo: self.centerYAnchor)
