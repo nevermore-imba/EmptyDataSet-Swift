@@ -292,6 +292,7 @@ public class EmptyDataSetView: UIView {
         if canShowTitle {
 
             titleLabel.isHidden = false
+            titleLabel.sizeToFit()
 
             _layoutConstraints += [
                 titleLabel.widthAnchor.constraint(equalTo: contentView.widthAnchor, multiplier: 1, constant: -2.0 * padding),
@@ -315,9 +316,10 @@ public class EmptyDataSetView: UIView {
         }
 
         // Assign the detail label's horizontal constraints
-        if (canShowDetail) {
+        if canShowDetail {
 
             detailLabel.isHidden = false
+            detailLabel.sizeToFit()
 
             _layoutConstraints += [
                 detailLabel.widthAnchor.constraint(equalTo: contentView.widthAnchor, multiplier: 1, constant: -2.0 * padding),
@@ -344,6 +346,7 @@ public class EmptyDataSetView: UIView {
         if canShowButton {
 
             button.isHidden = false
+            button.sizeToFit()
 
             var buttonSize = button.frame.size
 
@@ -351,25 +354,18 @@ public class EmptyDataSetView: UIView {
                 buttonSize = button.intrinsicContentSize
             }
 
-            let buttonMaxWidthConstraint = button.widthAnchor.constraint(
-                equalTo: contentView.widthAnchor,
-                multiplier: 1,
-                constant: -2.0 * padding
-            )
-
             if buttonSize.width > 0 && buttonSize.height > 0 {
-
-                buttonMaxWidthConstraint.priority = .required - 1
-
                 _layoutConstraints += [
                     button.widthAnchor.constraint(equalToConstant: buttonSize.width),
-                    buttonMaxWidthConstraint,
-                    button.heightAnchor.constraint(equalToConstant: buttonSize.height),
+                    button.heightAnchor.constraint(equalToConstant: buttonSize.height)
                 ]
-
             } else {
                 _layoutConstraints += [
-                    buttonMaxWidthConstraint,
+                    button.widthAnchor.constraint(
+                        equalTo: contentView.widthAnchor,
+                        multiplier: 1,
+                        constant: -2.0 * padding
+                    ),
                     button.heightAnchor.constraint(equalToConstant: 40),
                 ]
             }
