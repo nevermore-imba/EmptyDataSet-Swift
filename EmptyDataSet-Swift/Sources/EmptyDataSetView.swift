@@ -27,7 +27,6 @@ public class EmptyDataSetView: UIView {
         imageView.contentMode = .scaleAspectFit
         imageView.isUserInteractionEnabled = false
         imageView.accessibilityIdentifier = "empty set background image"
-        self.contentView.addSubview(imageView)
         return imageView
     }()
 
@@ -42,7 +41,6 @@ public class EmptyDataSetView: UIView {
         titleLabel.lineBreakMode = .byWordWrapping
         titleLabel.numberOfLines = 0
         titleLabel.accessibilityIdentifier = "empty set title"
-        self.contentView.addSubview(titleLabel)
         return titleLabel
     }()
 
@@ -57,7 +55,6 @@ public class EmptyDataSetView: UIView {
         detailLabel.lineBreakMode = .byWordWrapping
         detailLabel.numberOfLines = 0
         detailLabel.accessibilityIdentifier = "empty set detail label"
-        self.contentView.addSubview(detailLabel)
         return detailLabel
     }()
 
@@ -68,8 +65,6 @@ public class EmptyDataSetView: UIView {
         button.contentHorizontalAlignment = .center
         button.contentVerticalAlignment = .center
         button.accessibilityIdentifier = "empty set button"
-
-        self.contentView.addSubview(button)
         return button
     }()
 
@@ -113,6 +108,12 @@ public class EmptyDataSetView: UIView {
             if let customView = customView {
                 customView.removeFromSuperview()
             }
+            if newValue != nil {
+                imageView.removeFromSuperview()
+                titleLabel.removeFromSuperview()
+                detailLabel.removeFromSuperview()
+                button.removeFromSuperview()
+            }
         }
         didSet {
             if let customView = customView {
@@ -141,11 +142,19 @@ public class EmptyDataSetView: UIView {
     override init(frame: CGRect) {
         super.init(frame: frame)
         addSubview(contentView)
+        contentView.addSubview(imageView)
+        contentView.addSubview(titleLabel)
+        contentView.addSubview(detailLabel)
+        contentView.addSubview(button)
     }
 
     required public init?(coder aDecoder: NSCoder) {
         super.init(coder: aDecoder)
         addSubview(contentView)
+        contentView.addSubview(imageView)
+        contentView.addSubview(titleLabel)
+        contentView.addSubview(detailLabel)
+        contentView.addSubview(button)
     }
 
     override public func didMoveToSuperview() {
@@ -208,15 +217,8 @@ public class EmptyDataSetView: UIView {
         ]
 
         // When a custom offset is available, we adjust the vertical constraints' constants
-        if verticalOffset != 0 && constraints.count > 0 {
+        if verticalOffset != 0 {
             contentCenterYConstraint.constant = verticalOffset
-        }
-
-        if customView != nil {
-            imageView.removeFromSuperview()
-            titleLabel.removeFromSuperview()
-            detailLabel.removeFromSuperview()
-            button.removeFromSuperview()
         }
 
         if let customView = customView {
@@ -394,6 +396,10 @@ public class EmptyDataSetView: UIView {
         if let prevView {
             _layoutConstraints += [
                 prevView.bottomAnchor.constraint(equalTo: contentView.bottomAnchor)
+            ]
+        } else {
+            _layoutConstraints += [
+                contentView.heightAnchor.constraint(equalToConstant: 0)
             ]
         }
     }
