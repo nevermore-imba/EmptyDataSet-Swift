@@ -23,11 +23,7 @@ private var kEmptyDataSetDelegate =         "emptyDataSetDelegate"
 private var kEmptyDataSetView =             "emptyDataSetView"
 private var kConfigureEmptyDataSetView =    "configureEmptyDataSetView"
 
-#if swift(>=5.1)
-extension UIScrollView: @retroactive UIGestureRecognizerDelegate {}
-#else
 extension UIScrollView: UIGestureRecognizerDelegate {}
-#endif
 
 extension UIScrollView {
 
