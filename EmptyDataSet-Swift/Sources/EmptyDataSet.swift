@@ -23,8 +23,14 @@ private var kEmptyDataSetDelegate =         "emptyDataSetDelegate"
 private var kEmptyDataSetView =             "emptyDataSetView"
 private var kConfigureEmptyDataSetView =    "configureEmptyDataSetView"
 
-extension UIScrollView: @retroactive UIGestureRecognizerDelegate {
-    
+#if swift(>=5.1)
+extension UIScrollView: @retroactive UIGestureRecognizerDelegate {}
+#else
+extension UIScrollView: UIGestureRecognizerDelegate {}
+#endif
+
+extension UIScrollView {
+
     private var configureEmptyDataSetView: ((EmptyDataSetView) -> Void)? {
         get {
             return objc_getAssociatedObject(self, &kConfigureEmptyDataSetView) as? (EmptyDataSetView) -> Void
